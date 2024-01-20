@@ -5,9 +5,6 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "WLAN Name";
-const char* password = "Passwort";
-
 JsonDocument zustand;
 JsonDocument details;
 
@@ -26,6 +23,18 @@ void setup() {
     return;
   }
   // LittleFS.beginn();
+
+  File f = LittleFS.open("/wlanConfig.txt", "r");
+
+   if (!f) {
+    Serial.println("Datei konnte nicht geöffnet werden");
+    return;
+  }
+
+  String ssid = f.readStringUntil('\n');
+  String password = f.readStringUntil('\n');
+
+  f.close();
   
   WiFi.begin(ssid, password);
   Serial.print("Connection to Wifi . . .");
