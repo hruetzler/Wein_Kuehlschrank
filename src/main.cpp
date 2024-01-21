@@ -4,12 +4,13 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <weinWebserver.h>
 
 JsonDocument zustand;
 JsonDocument details;
+WeinWebserver* server = nullptr;
 
-
-AsyncWebServer server(80);
+// AsyncWebServer server(80);
 
 
 void loadJson();
@@ -46,14 +47,23 @@ void setup() {
   Serial.println();
   Serial.println(WiFi.localIP());
 
-  loadJson();
 
-  SERVER();
+
+  // loadJson();
+
+  // SERVER();
+  // WeinWebserver server(&LittleFS);
+
+  
+
+  server = new WeinWebserver(&LittleFS);
+  // server.test();
+  
 
   }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  
 }
 
 
@@ -63,131 +73,131 @@ void loop() {
 
 
 
-void SERVER()
-{
+// void SERVER()
+// {
 
-  // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    Serial.println("Seite aufgerufen");
-    request->send(LittleFS, "/index.html", String(), false);
-  });
+//   // Route for root / web page
+//   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     Serial.println("Seite aufgerufen");
+//     request->send(LittleFS, "/index.html", String(), false);
+//   });
 
-   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(LittleFS, "/style.css", "text/css");
-  });
+//    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     request->send(LittleFS, "/style.css", "text/css");
+//   });
 
-  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(LittleFS, "/script.js", "text/javascript");
-  });
+//   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     request->send(LittleFS, "/script.js", "text/javascript");
+//   });
 
-  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(LittleFS, "/favicon.ico", "text/plain");
-  });
+//   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     request->send(LittleFS, "/favicon.ico", "text/plain");
+//   });
 
-    server.on("/addIcon.png", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(LittleFS, "/addIcon.png", "text/png");
-  });
+//     server.on("/addIcon.png", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     request->send(LittleFS, "/addIcon.png", "text/png");
+//   });
 
 
-  server.on("/statusSwitch", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "application/json", zustand.as<String>());
-  });
+//   server.on("/statusSwitch", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     request->send(200, "application/json", zustand.as<String>());
+//   });
 
   
-  server.onRequestBody([](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-    if (request->url() == "/swClick" && request->method() == HTTP_PUT){
+//   server.onRequestBody([](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
+//     if (request->url() == "/swClick" && request->method() == HTTP_PUT){
 
-      request->send(200, "text/plain", "Alle geklappt");
-      Serial.println((const char*)data);
-      Serial.println(len);
-      if (*data == '1'){
-        Serial.println(":)");
-        zustand["verriegelt"] = true;
-      }else{
-        Serial.println(":(");
-        zustand["verriegelt"] = false;
-      }
-    }
-    if (request->url() == "/nueDaten" && request->method() == HTTP_PUT){
-      request->send(200, "text/plain", "Alle geklappt");
+//       request->send(200, "text/plain", "Alle geklappt");
+//       Serial.println((const char*)data);
+//       Serial.println(len);
+//       if (*data == '1'){
+//         Serial.println(":)");
+//         zustand["verriegelt"] = true;
+//       }else{
+//         Serial.println(":(");
+//         zustand["verriegelt"] = false;
+//       }
+//     }
+//     if (request->url() == "/nueDaten" && request->method() == HTTP_PUT){
+//       request->send(200, "text/plain", "Alle geklappt");
       
-      JsonDocument doc;
-      deserializeJson(doc, data);
-      String name = doc["name"];
-      String datum = doc["datum"];
-      String uhrzeit = doc["uhrzeit"];
-      String stunden = doc["stunden"];
-      String code = doc["code"];
-      Serial.println(name);
-      Serial.println(datum);
-      Serial.println(uhrzeit);
-      Serial.println(stunden);
-      Serial.println(code);
+//       JsonDocument doc;
+//       deserializeJson(doc, data);
+//       String name = doc["name"];
+//       String datum = doc["datum"];
+//       String uhrzeit = doc["uhrzeit"];
+//       String stunden = doc["stunden"];
+//       String code = doc["code"];
+//       Serial.println(name);
+//       Serial.println(datum);
+//       Serial.println(uhrzeit);
+//       Serial.println(stunden);
+//       Serial.println(code);
 
-      details["Name"] = name;
-      details["Datum"] = datum;
-      details["Uhrzeit"] = uhrzeit;
-      details["Dauer"] = stunden;
-      details["Code"] = code;
+//       details["Name"] = name;
+//       details["Datum"] = datum;
+//       details["Uhrzeit"] = uhrzeit;
+//       details["Dauer"] = stunden;
+//       details["Code"] = code;
 
-      JsonArray zeiten = zustand["zeiten"];
+//       JsonArray zeiten = zustand["zeiten"];
       
 
-      zeiten.add(details);
+//       zeiten.add(details);
 
-      saveJson();
+//       saveJson();
 
-    }
-    if (request->url() == "/datenAktualisieren" && request->method() == HTTP_PATCH){
-      request->send(200, "text/plain", "Alle geklappt");
-      JsonDocument doc;
-      deserializeJson(doc, data);
+//     }
+//     if (request->url() == "/datenAktualisieren" && request->method() == HTTP_PATCH){
+//       request->send(200, "text/plain", "Alle geklappt");
+//       JsonDocument doc;
+//       deserializeJson(doc, data);
 
-      int id = doc["id"];
-      String name = doc["name"];
-      String datum = doc["datum"];
-      String uhrzeit = doc["uhrzeit"];
-      String stunden = doc["stunden"];
-      String code = doc["code"];
+//       int id = doc["id"];
+//       String name = doc["name"];
+//       String datum = doc["datum"];
+//       String uhrzeit = doc["uhrzeit"];
+//       String stunden = doc["stunden"];
+//       String code = doc["code"];
 
-      details["Name"] = name;
-      details["Datum"] = datum;
-      details["Uhrzeit"] = uhrzeit;
-      details["Dauer"] = stunden;
-      details["Code"] = code;
+//       details["Name"] = name;
+//       details["Datum"] = datum;
+//       details["Uhrzeit"] = uhrzeit;
+//       details["Dauer"] = stunden;
+//       details["Code"] = code;
 
-      zustand["zeiten"][id] = details;
+//       zustand["zeiten"][id] = details;
 
-      saveJson();
-    }
-    if (request->url() == "/datenDelete" && request->method() == HTTP_DELETE){
-      request->send(200, "text/plain", "Alle geklappt");
+//       saveJson();
+//     }
+//     if (request->url() == "/datenDelete" && request->method() == HTTP_DELETE){
+//       request->send(200, "text/plain", "Alle geklappt");
 
-      JsonDocument doc;
-      deserializeJson(doc, data);
-      int id = doc["id"];
+//       JsonDocument doc;
+//       deserializeJson(doc, data);
+//       int id = doc["id"];
 
-      JsonArray zeiten = zustand["zeiten"];
-      Serial.println(id);
-      zeiten.remove(id);
+//       JsonArray zeiten = zustand["zeiten"];
+//       Serial.println(id);
+//       zeiten.remove(id);
 
 
-      saveJson();
+//       saveJson();
       
     
-    }
+//     }
 
-  });
-  server.onNotFound([](AsyncWebServerRequest *request){
-    if (request->url() != "/swClick"){
-      request->send(404, "text/plain", "Invalid request");
-    }
+//   });
+//   server.onNotFound([](AsyncWebServerRequest *request){
+//     if (request->url() != "/swClick"){
+//       request->send(404, "text/plain", "Invalid request");
+//     }
 
-  });
+//   });
 
-  server.begin();
+//   server.begin();
 
-}
+// }
 
 void loadJson(){
   File file = LittleFS.open("/json/daten.json", "r");
