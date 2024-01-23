@@ -1,15 +1,41 @@
 #include <weinWebserver.h>
 
+void WeinWebserver::checkCode(String code){
+    int len = zustand["zeiten"].size();
+    Serial.println(len);
+    Serial.println("zähler");
+
+    for (int i = 0; i < len; i++)
+    {
+        String codeJ = zustand["zeiten"][i]["Code"];
+        if (code == codeJ) 
+        {
+            Serial.println("Der Code wurde richtig eingegeben");
+            this->setZustand(true);
+            String datum = zustand["zeiten"][i]["Datum"];
+            break;
+        }
+        
+    }
+    
+
+}
+
+
 void WeinWebserver::SERVER(){
-    pServer->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    pServer->on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        if (!request->authenticate(this->username, this->password)) return request->requestAuthentication();
+        
         // Serial.println("Seite aufgerufen");
         request->send(LittleFS, "/index.html", String(), false);
     });
-    pServer->on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    pServer->on("/style.css", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        if (!request->authenticate(this->username, this->password)) return request->requestAuthentication();
         request->send(LittleFS, "/style.css", "text/css");
     });
 
-    pServer->on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    pServer->on("/script.js", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        if (!request->authenticate(this->username, this->password)) return request->requestAuthentication();
         request->send(LittleFS, "/script.js", "text/javascript");
     });
 
@@ -23,11 +49,13 @@ void WeinWebserver::SERVER(){
 
 
     pServer->on("/statusSwitch", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        if (!request->authenticate(this->username, this->password)) return request->requestAuthentication();
         request->send(200, "application/json", this->zustand.as<String>());
         // request->send(200, "application/json", this->zustandString);
         // Serial.println(this->zustandString);
     });
     pServer->onRequestBody([this](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
+        if (!request->authenticate(this->username, this->password)) return request->requestAuthentication();
         if (request->url() == "/swClick" && request->method() == HTTP_PUT){
 
         request->send(200, "text/plain", "Alle geklappt");
@@ -113,6 +141,7 @@ void WeinWebserver::SERVER(){
         }
 
     });
+
 
     pServer->begin();
     // Serial.println("Ich wurde aufgerufen!!!!");

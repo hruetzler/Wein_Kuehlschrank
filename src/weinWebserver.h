@@ -23,9 +23,15 @@ class WeinWebserver {
       delete pServer;
     }
 
-    void test(){
-      Serial.println(zustandString);
+    bool getZustand(){
+      return zustand["verriegelt"];
     }
+
+    void setZustand(bool zustand){
+      this->zustand["verriegelt"] = zustand;
+    }
+
+    void checkCode(String code);
 
 
 
@@ -36,9 +42,13 @@ class WeinWebserver {
     JsonDocument details;
     AsyncWebServer *pServer;
     fs::FS* dateisystem;
+    const char* username = "admin";
+    const char* password = "admin";
 
     void SERVER();
     void loadJson();
     void saveJson();
+
+
 
 };

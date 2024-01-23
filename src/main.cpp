@@ -5,17 +5,33 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <weinWebserver.h>
+#include <Keypad.h>
 
 JsonDocument zustand;
 JsonDocument details;
 WeinWebserver* server = nullptr;
+bool zustandSchloss = false;
 
-// AsyncWebServer server(80);
+const int LED = D8;
 
+String code = "";
+const byte COLS = 4; //4 Spalten
+const byte ROWS = 4; //4 Zeilen
 
-void loadJson();
-void saveJson();
-void SERVER();
+char hexaKeys[ROWS][COLS]={
+{'1','2','3','A'},
+{'4','5','6','B'},
+{'7','8','9','C'},
+{'*','0','#','D'}
+};
+
+byte colPins[COLS] = {D4,D5,D6,D7}; //Definition der Pins für die 3 Spalten
+byte rowPins[ROWS] = {D0,D1,D2,D3}; //Definition der Pins für die 4 Zeilen
+char Taste;
+
+Keypad Tastenfeld = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS);
+
+void codeEingabe();
 
 void setup() {
   Serial.begin(115200);
@@ -23,7 +39,6 @@ void setup() {
     Serial.println("An Error has occurred while mounting LittleFS");
     return;
   }
-  // LittleFS.beginn();
 
   File f = LittleFS.open("/wlanConfig.txt", "r");
 
@@ -48,188 +63,49 @@ void setup() {
   Serial.println(WiFi.localIP());
 
 
-
-  // loadJson();
-
-  // SERVER();
-  // WeinWebserver server(&LittleFS);
-
-  
-
   server = new WeinWebserver(&LittleFS);
-  // server.test();
-  
+
+  pinMode(LED, OUTPUT);
+  // digitalWrite(LED, HIGH);
+
 
   }
 
 void loop() {
+  zustandSchloss =  server->getZustand();
+  digitalWrite(LED, zustandSchloss);
+
+  codeEingabe();
+
+  
+  
+
   
 }
 
+void codeEingabe(){
 
+  Taste = Tastenfeld.getKey();
 
+  if (Taste)
+  {
+    if (Taste =='A')
+    {
+      code = "";
+      Serial.println("Resetet");
+      return;
+    }
+    if(Taste == 'D'){
+      Serial.println(code);
+      Serial.println("Bestätigt");
+      server->checkCode(code);
+      code = "";
+      return;
+    }
+    code = code + Taste;
+    Serial.println(code);
 
-
-
-
-
-// void SERVER()
-// {
-
-//   // Route for root / web page
-//   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-//     Serial.println("Seite aufgerufen");
-//     request->send(LittleFS, "/index.html", String(), false);
-//   });
-
-//    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-//     request->send(LittleFS, "/style.css", "text/css");
-//   });
-
-//   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-//     request->send(LittleFS, "/script.js", "text/javascript");
-//   });
-
-//   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
-//     request->send(LittleFS, "/favicon.ico", "text/plain");
-//   });
-
-//     server.on("/addIcon.png", HTTP_GET, [](AsyncWebServerRequest *request) {
-//     request->send(LittleFS, "/addIcon.png", "text/png");
-//   });
-
-
-//   server.on("/statusSwitch", HTTP_GET, [](AsyncWebServerRequest *request) {
-//     request->send(200, "application/json", zustand.as<String>());
-//   });
-
-  
-//   server.onRequestBody([](AsyncWebServerRequest * request, uint8_t *data, size_t len, size_t index, size_t total){
-//     if (request->url() == "/swClick" && request->method() == HTTP_PUT){
-
-//       request->send(200, "text/plain", "Alle geklappt");
-//       Serial.println((const char*)data);
-//       Serial.println(len);
-//       if (*data == '1'){
-//         Serial.println(":)");
-//         zustand["verriegelt"] = true;
-//       }else{
-//         Serial.println(":(");
-//         zustand["verriegelt"] = false;
-//       }
-//     }
-//     if (request->url() == "/nueDaten" && request->method() == HTTP_PUT){
-//       request->send(200, "text/plain", "Alle geklappt");
-      
-//       JsonDocument doc;
-//       deserializeJson(doc, data);
-//       String name = doc["name"];
-//       String datum = doc["datum"];
-//       String uhrzeit = doc["uhrzeit"];
-//       String stunden = doc["stunden"];
-//       String code = doc["code"];
-//       Serial.println(name);
-//       Serial.println(datum);
-//       Serial.println(uhrzeit);
-//       Serial.println(stunden);
-//       Serial.println(code);
-
-//       details["Name"] = name;
-//       details["Datum"] = datum;
-//       details["Uhrzeit"] = uhrzeit;
-//       details["Dauer"] = stunden;
-//       details["Code"] = code;
-
-//       JsonArray zeiten = zustand["zeiten"];
-      
-
-//       zeiten.add(details);
-
-//       saveJson();
-
-//     }
-//     if (request->url() == "/datenAktualisieren" && request->method() == HTTP_PATCH){
-//       request->send(200, "text/plain", "Alle geklappt");
-//       JsonDocument doc;
-//       deserializeJson(doc, data);
-
-//       int id = doc["id"];
-//       String name = doc["name"];
-//       String datum = doc["datum"];
-//       String uhrzeit = doc["uhrzeit"];
-//       String stunden = doc["stunden"];
-//       String code = doc["code"];
-
-//       details["Name"] = name;
-//       details["Datum"] = datum;
-//       details["Uhrzeit"] = uhrzeit;
-//       details["Dauer"] = stunden;
-//       details["Code"] = code;
-
-//       zustand["zeiten"][id] = details;
-
-//       saveJson();
-//     }
-//     if (request->url() == "/datenDelete" && request->method() == HTTP_DELETE){
-//       request->send(200, "text/plain", "Alle geklappt");
-
-//       JsonDocument doc;
-//       deserializeJson(doc, data);
-//       int id = doc["id"];
-
-//       JsonArray zeiten = zustand["zeiten"];
-//       Serial.println(id);
-//       zeiten.remove(id);
-
-
-//       saveJson();
-      
-    
-//     }
-
-//   });
-//   server.onNotFound([](AsyncWebServerRequest *request){
-//     if (request->url() != "/swClick"){
-//       request->send(404, "text/plain", "Invalid request");
-//     }
-
-//   });
-
-//   server.begin();
-
-// }
-
-void loadJson(){
-  File file = LittleFS.open("/json/daten.json", "r");
-  DeserializationError error = deserializeJson(zustand, file);
-
-  if(error){
-    Serial.println("Es ist ein Fehler beim lesen aufgetreten");
-     zustand["verriegelt"] = false;
-
-    details["Name"] = "Erik";
-    details["Datum"] = "2007-12-24";
-    details["Uhrzeit"] = "12:00";
-    details["Dauer"] = "3";
-    details["Code"] = "5763";
-
-    JsonArray zeiten = zustand["zeiten"].to<JsonArray>();
-    zeiten.add(details);
-
-    details["Name"] = "Henri";
-    details["Datum"] = "2005-10-22";
-    details["Uhrzeit"] = "12:00";
-    details["Dauer"] = "3";
-    details["Code"] = "5763";
-
-    zeiten.add(details);
+    // Serial.println(Taste);
   }
-
-  file.close();
 }
 
-void saveJson(){
-  File file = LittleFS.open("/json/daten.json", "w");
-  serializeJson(zustand, file);
-  file.close();
-}
